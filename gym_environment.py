@@ -129,7 +129,7 @@ def main():
     env = DataAssociationEnv(input_data_file=args.input_data_file, solver=solver, n_possible_observations=args.max_obs_per_time_step,
                              n_possible_LMs=args.num_landmarks_per_side*2, num_landmarks_per_side=args.num_landmarks_per_side, should_show_plots=should_show_plots,
                              should_write_movie=should_write_movie, num_steps=num_steps, alphas=alphas,
-                             beta=beta, random_state_generator=should_generate_random_state, dt=args.dt)
+                             beta=beta, random_state_generator=should_generate_random_state, dt=args.dt, movie_file=args.movie_file)
 
     for i_episode in range(20):
         observation = env.reset()

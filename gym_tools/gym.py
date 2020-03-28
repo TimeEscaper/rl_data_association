@@ -21,7 +21,7 @@ DEFAULT_HEIGHT_SIZE = 400
 class DataAssociationEnv(gym.Env):
     def __init__(self, input_data_file, solver, n_possible_observations=10, n_possible_LMs=10, num_landmarks_per_side=5,
                  should_show_plots=True, should_write_movie=False, num_steps=100, alphas=(0.05, 0.001, 0.05, 0.01),
-                 beta=(10., 10.), random_state_generator=True, dt=0.1):
+                 beta=(10., 10.), random_state_generator=True, dt=0.1, movie_file="Gym.mp4"):
 
         # Current observation
         # (before the new observation we have info about LM coordinates and their IDs if they were observed previously)
@@ -45,6 +45,8 @@ class DataAssociationEnv(gym.Env):
 
         self.dt = 1.0 / 30.
         self.t = 0
+
+        self.movie_file = movie_file
 
         self.should_write_movie = should_write_movie
         self.should_show_plots = should_show_plots
@@ -137,7 +139,7 @@ class DataAssociationEnv(gym.Env):
         return self.observations, self.robot_coordinates, self.LM_data
 
     def render(self, mode='live', screen_width=DEFAULT_WIDTH_SIZE, screen_height=DEFAULT_HEIGHT_SIZE):
-        with self.movie_writer.saving(self.fig, 'simulation_data', self.num_steps) if self.should_write_movie else get_dummy_context_mgr():
+        with self.movie_writer.saving(self.fig, self.movie_file, self.num_steps) if self.should_write_movie else get_dummy_context_mgr():
 
             plt.cla()
             plot_field(self.field_map, self.noise_free_observations[:, 2])
@@ -151,11 +153,11 @@ class DataAssociationEnv(gym.Env):
             if not self.random_state_generator:
                 tp1 = self.t + 1
                 t = self.t
-                plt.plot(self.data_sam.debug.real_robot_path[1:tp1, 0], self.data_sam.debug.real_robot_path[1:tp1, 1], 'm')
-                plt.plot(self.data_sam.debug.noise_free_robot_path[1:tp1, 0], self.data_sam.debug.noise_free_robot_path[1:tp1, 1], 'g')
+                # plt.plot(self.data_sam.debug.real_robot_path[1:tp1, 0], self.data_sam.debug.real_robot_path[1:tp1, 1], 'm')
+                # plt.plot(self.data_sam.debug.noise_free_robot_path[1:tp1, 0], self.data_sam.debug.noise_free_robot_path[1:tp1, 1], 'g')
 
-                plt.plot([self.data_sam.debug.real_robot_path[t, 0]], [self.data_sam.debug.real_robot_path[t, 1]], '*r')
-                plt.plot([self.data_sam.debug.noise_free_robot_path[t, 0]], [self.data_sam.debug.noise_free_robot_path[t, 1]], '*g')
+                # plt.plot([self.data_sam.debug.real_robot_path[t, 0]], [self.data_sam.debug.real_robot_path[t, 1]], '*r')
+                # plt.plot([self.data_sam.debug.noise_free_robot_path[t, 0]], [self.data_sam.debug.noise_free_robot_path[t, 1]], '*g')
 
             if self.should_show_plots:
                 # Draw all the plots and pause to create an animation effect.
@@ -212,10 +214,11 @@ class DataAssociationEnv(gym.Env):
             self.robot_coordinates = get_state(self.field_map)
             n_observations = int(np.round(np.random.random_sample() * self.n_possible_observations))
 
+            flag = True
             for n_obs in range(n_observations):
-                id = int(np.round(np.random.random_sample() * self.n_possible_observations))
+                id = int(np.round(np.random.random_sample() * (self.n_possible_LMs - 1)))
                 while id in self.observations_IDs:
-                    id = int(np.round(np.random.random_sample() * self.n_possible_observations))
+                    id = int(np.round(np.random.random_sample() * (self.n_possible_LMs - 1)))
                 noise_free_observation = get_observation(self.robot_coordinates, self.field_map, id)
                 noisy_observation = get_noisy_observation(self.robot_coordinates, self.field_map, id, self.beta)
 
@@ -227,10 +230,13 @@ class DataAssociationEnv(gym.Env):
                 self.observations[n_obs] = noisy_observation[:2]
                 # self.LM_data[id, :2] = get_landmark_coords_global(self.robot_coordinates, self.noisy_observations)
                 # We assume correct DA on previous step
-                for old_id in self.unique_observations_IDs:
-                    self.LM_data_flex = np.vstack(
-                        (self.LM_data_flex, np.array([self.field_map.landmarks_poses_x[old_id],
+
+                if flag:
+                    for old_id in self.unique_observations_IDs:
+                        self.LM_data_flex = np.vstack(
+                            (self.LM_data_flex, np.array([self.field_map.landmarks_poses_x[old_id],
                                                       self.field_map.landmarks_poses_y[old_id], old_id])))
+                    flag = False
 
                 if id not in self.unique_observations_IDs:
                     '''
@@ -239,10 +245,10 @@ class DataAssociationEnv(gym.Env):
                     '''
                     self.unique_observations_IDs.append(id)
 
-                for i in range(self.LM_data_flex):
-                    self.LM_data[i] = self.LM_data_flex[i]
+            for i in range(self.LM_data_flex.shape[0]):
+                self.LM_data[i] = self.LM_data_flex[i]
 
-                # self.LM_coordinates = ... (for SLAM - taking from theta)
+            # self.LM_coordinates = ... (for SLAM - taking from theta)
 
         else:
             map = self.sam.get_current_map()
