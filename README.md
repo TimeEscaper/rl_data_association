@@ -1,8 +1,10 @@
 # RL data association
 Data Association in SLAM using Reinforcement Learning (["Perception in Robotics"](https://github.com/Kichkun/perception_course) Skoltech course project)
+![Image of Table](https://github.com/TimeEscaper/rl_data_association/tree/dev/images/table.png)
 
 # Custom gym environment
 [Gym](https://gym.openai.com/) is a toolkit for developing and comparing reinforcement learning algorithms. For our project we created custom environment.
+![Image of Data](https://github.com/TimeEscaper/rl_data_association/tree/dev/images/data_transfer.png)
 ## How to use it
 - Create object of class DataAssociationEnv with necessary parameters
 - You can choose two ways to generate observations: 
