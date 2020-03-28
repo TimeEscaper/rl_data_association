@@ -6,7 +6,9 @@ Data Association in SLAM using Reinforcement Learning (["Perception in Robotics"
 ## How to use it
 - Create object of class DataAssociationEnv with necessary parameters
 - You can choose two ways to generate observations: 
+
 1 From .npy file or generated data and solving SAM we can obtain robots, landmarks coordinates and observations
+
 2 Random observations generator. You can pick max number of observations and number of landmarks. It will randomly generate observation data (with different number of obserwations at each step) and robot position on the field. 
 
 ## Parameters
