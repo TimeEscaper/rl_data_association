@@ -15,7 +15,6 @@ def main():
 
     test_input = torch.randn(n_landmarks, n_observations * obs_dim)
     test_out = da_nn.forward(test_input)
-    print(test_out.shape)
 
 
 if __name__ == "__main__":

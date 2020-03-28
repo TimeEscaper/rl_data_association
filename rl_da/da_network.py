@@ -37,7 +37,7 @@ class DANetwork(nn.Module):
         for i in range(self.n_layers_):
             input_batch = input_vectors[i].unsqueeze(dim=0).unsqueeze(dim=0)
             out, hidden_input = self.lstms_[i](input_batch, hidden_input)
-            outputs[i, :] = self.linears_[i](out[0, 0, :])
+            outputs[i, :] = F.softmax(self.linears_[i](out[0, 0, :]), dim=-1)
 
         return outputs
 
