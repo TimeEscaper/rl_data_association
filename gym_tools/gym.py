@@ -82,16 +82,16 @@ class DataAssociationEnv(gym.Env):
 
         if not random_state_generator:
             if input_data_file:
-                self.data = load_data(input_data_file)
+                self.data_sam = load_data(input_data_file)
             elif num_steps:
                 # Generate data, assuming `--num-steps` was present in the CL args.
-                self.data = generate_input_data(initial_state.mu.T,
-                                                num_steps,
-                                                num_landmarks_per_side,
-                                                n_possible_observations,
-                                                alphas,
-                                                beta,
-                                                dt)
+                self.data_sam = generate_input_data(initial_state.mu.T,
+                                                    num_steps,
+                                                    num_landmarks_per_side,
+                                                    n_possible_observations,
+                                                    alphas,
+                                                    beta,
+                                                    dt)
             else:
                 raise RuntimeError('')
 
@@ -151,12 +151,11 @@ class DataAssociationEnv(gym.Env):
             if not self.random_state_generator:
                 tp1 = self.t + 1
                 t = self.t
-                data = self.data
-                plt.plot(data.debug.real_robot_path[1:tp1, 0], data.debug.real_robot_path[1:tp1, 1], 'm')
-                plt.plot(data.debug.noise_free_robot_path[1:tp1, 0], data.debug.noise_free_robot_path[1:tp1, 1], 'g')
+                plt.plot(self.data_sam.debug.real_robot_path[1:tp1, 0], self.data_sam.debug.real_robot_path[1:tp1, 1], 'm')
+                plt.plot(self.data_sam.debug.noise_free_robot_path[1:tp1, 0], self.data_sam.debug.noise_free_robot_path[1:tp1, 1], 'g')
 
-                plt.plot([data.debug.real_robot_path[t, 0]], [data.debug.real_robot_path[t, 1]], '*r')
-                plt.plot([data.debug.noise_free_robot_path[t, 0]], [data.debug.noise_free_robot_path[t, 1]], '*g')
+                plt.plot([self.data_sam.debug.real_robot_path[t, 0]], [self.data_sam.debug.real_robot_path[t, 1]], '*r')
+                plt.plot([self.data_sam.debug.noise_free_robot_path[t, 0]], [self.data_sam.debug.noise_free_robot_path[t, 1]], '*g')
 
             if self.should_show_plots:
                 # Draw all the plots and pause to create an animation effect.
@@ -248,27 +247,29 @@ class DataAssociationEnv(gym.Env):
         else:
             map = self.sam.get_current_map()
             counter = 0
+            ids = list(self.sam.landmarks_index_map_.keys())
             for landmark, _ in map:
-                self.LM_data[counter] = landmark
+                self.LM_data[counter, :2] = landmark
+                self.LM_data[counter, 2] = ids[counter]
                 counter += 1
 
             # Control at the current step.
-            u = self.data.filter.motion_commands[self.t]
+            u = self.data_sam.filter.motion_commands[self.t]
 
             # Observation at the current step.
-            z = self.data.filter.observations[self.t]
+            z = self.data_sam.filter.observations[self.t]
 
             # SLAM predict(u)
-            # self.sam.predict(u)
+            self.sam.predict(u)
 
             # SLAM update
-            # self.sam.update(z)
+            self.sam.update(z)
 
             # self.robot_coordinates = np.array([self.sam.states_[-1, 0], self.sam.states_[-1, 1], wrap_angle(self.sam.states_[-1, 2])])
-            self.robot_coordinates = self.data.debug.real_robot_path[self.t]
+            self.robot_coordinates = self.data_sam.debug.real_robot_path[self.t]
 
-            self.noise_free_observations = self.data.debug.noise_free_observations[self.t]
-            self.noisy_observations = self.data.filter.observations[self.t]
+            self.noise_free_observations = self.data_sam.debug.noise_free_observations[self.t]
+            self.noisy_observations = self.data_sam.filter.observations[self.t]
 
             for id in self.noisy_observations[:, 2]:
                 self.observations_IDs.append(id)

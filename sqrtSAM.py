@@ -268,4 +268,8 @@ class SqrtSAM(SlamBase):
                 self.chi_squared_errors_.append(b.T @ b)
                 break
 
+    @property
+    def landmarks_index_map(self):
+        return self.landmarks_index_map_
+
 
