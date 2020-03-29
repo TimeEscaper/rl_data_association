@@ -26,6 +26,7 @@ In file gym_environment.py you can find usage of the environment. List of the pa
 - --movie-fps: The FPS rate of the movie to write
 - --solver: Least squares solving method: build-in numpy or Cholesky factorization with back-substitution
 - -r: Generate random robots state each step for gym environment
+- --scaling: Set map scaling coefficient
 
 ## How it works
 For example lets assume that we picked random data generation option (8 landmarks). After first iteration we will get observation parameter:
@@ -75,6 +76,12 @@ python gym_environment.py -s -r --max-obs-per-time-step 7 -n 10
 ```bash
 cd "<project_dir>"
 python gym_environment.py -s -i slam-evaluation-input.npy -m da.mp4
+```
+
+# To record video, use randomly generate data and IC as data association algorithm 
+```bash
+cd "<project_dir>"
+python gym_environment_ic.py -s -r --max-obs-per-time-step 3 --num-landmarks-per-side 5 --scaling 2 -m da_ic.mp4
 ```
 
 
