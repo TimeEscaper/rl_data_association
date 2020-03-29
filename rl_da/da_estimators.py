@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 
-from da_network import DANetwork
+from rl_da.da_network import DANetwork
 
 
 class ReinforceEstimator:
