@@ -30,13 +30,13 @@ class DataAssociationEnv(gym.Env):
 
         self.noisy_observations = np.zeros((0, 3))  # format: [range, bearing, ID]
         self.noise_free_observations = np.zeros((0, 3))  # format: [range, bearing, ID]
-        self.observations_IDs = []
+        self.observations_IDs = np.zeros(n_possible_LMs)
 
         # Observed landmarks
         self.LM_data = np.zeros((n_possible_LMs, 3))  # format: [x, y, ID]. For unknown ID: -1
         # self.LM_IDs = np.zeros((n_possible_LMs, 1))  # format: [ID]
 
-        self.data_association = np.zeros((n_possible_observations, 1))  # format: [ID]
+        self.data_association = np.zeros(n_possible_LMs)  # format: [ID]
         self.n_possible_LMs = n_possible_LMs
         self.n_possible_observations = n_possible_observations
 
@@ -131,7 +131,8 @@ class DataAssociationEnv(gym.Env):
         self.LM_data.fill(0)
         self.LM_data[:, 2].fill(-1)  # No ID information yet
 
-        self.observations_IDs = []
+        self.observations_IDs = np.zeros(self.n_possible_LMs)
+        self.observations_IDs.fill(self.n_possible_observations)
 
         self.noisy_observations = np.zeros((0, 3))
         self.noise_free_observations = np.zeros((0, 3))
@@ -185,13 +186,20 @@ class DataAssociationEnv(gym.Env):
     def _compute_reward(self):
         n_correct = 0
         n_incorrect = 0
-        counter = 0
-        for observation in self.observations_IDs:
-            if observation == self.data_association[counter]:
+
+        print(self.observations_IDs)
+        for i in range(self.data_association.shape[0]):
+            if self.data_association[i] == self.observations_IDs[i]:
                 n_correct += 1
             else:
                 n_incorrect += 1
-            counter += 1
+
+        # for observation in self.observations_IDs:
+        #     if observation == self.data_association[counter]:
+        #         n_correct += 1
+        #     else:
+        #         n_incorrect += 1
+        #     counter += 1
 
         if n_incorrect + n_correct != 0:
             return n_correct/(n_incorrect + n_correct)
@@ -199,7 +207,8 @@ class DataAssociationEnv(gym.Env):
             return 10000000
 
     def _get_observation(self):
-        self.observations_IDs = []
+        self.observations_IDs = np.zeros(self.n_possible_LMs)
+        self.observations_IDs.fill(self.n_possible_observations)
         self.LM_data_flex = np.zeros((0, 3))
 
         self.observations.fill(0)
@@ -264,6 +273,7 @@ class DataAssociationEnv(gym.Env):
 
             # Observation at the current step.
             z = self.data_sam.filter.observations[self.t]
+            print(z[:, 2])
 
             # SLAM predict(u)
             self.sam.predict(u)
@@ -277,8 +287,10 @@ class DataAssociationEnv(gym.Env):
             self.noise_free_observations = self.data_sam.debug.noise_free_observations[self.t]
             self.noisy_observations = self.data_sam.filter.observations[self.t]
 
-            for id in self.noisy_observations[:, 2]:
-                self.observations_IDs.append(id)
+            self.observations_IDs = np.zeros(self.n_possible_LMs)
+            self.observations_IDs.fill(self.n_possible_observations)
+            for i, obs in enumerate(self.noisy_observations):
+                    self.observations_IDs[int(obs[2])] = i
 
             self.observations = self.noisy_observations[:, :2]
 

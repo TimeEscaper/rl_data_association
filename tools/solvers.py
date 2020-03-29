@@ -11,7 +11,7 @@ def solve_least_squares(A, b, method):
 
 
 def solve_least_squares_numpy(A, b):
-    return np.linalg.lstsq(A, b)[0]
+    return np.linalg.lstsq(A, b, rcond=-1)[0]
 
 
 def solve_least_squares_cholesky(A, b):
