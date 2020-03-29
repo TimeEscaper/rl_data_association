@@ -3,9 +3,11 @@ from argparse import ArgumentParser
 import numpy as np
 from gym_tools.gym import DataAssociationEnv
 from gym_tools.tools import Gaussian
-from tools.task import wrap_angle
+from ic_da.ic import IC
+import matplotlib.pyplot as plt
 
-from rl_da.da_estimators import ReinforceEstimator
+def isNaN(num):
+    return num != num
 
 def get_cli_args():
     parser = ArgumentParser('Perception in Robotics FP')
@@ -122,78 +124,50 @@ def main():
                              should_write_movie=should_write_movie, num_steps=num_steps, alphas=alphas,
                              beta=beta, random_state_generator=should_generate_random_state, dt=args.dt, movie_file=args.movie_file)
 
-    # for i_episode in range(20):
-    #     observation = env.reset()
-    #     for t in range(num_steps):
-    #         env.render()
-    #         print(observation)
-    #         action = env.action_space.sample()
-    #         observation, reward, done, info = env.step(action)
-    #         if done:
-    #             print("Episode finished after {} timesteps".format(t + 1))
-    #             break
+    x_list = []
+    x_list.append(mean_prior)
+    DA = IC(env.field_map, beta)
 
-    estimator = ReinforceEstimator(observation_dim=1,
-                                   n_observations=args.max_obs_per_time_step,
-                                   max_landmarks=args.num_landmarks_per_side*2,
-                                   hidden_state_size=10)
+    all_rewards = []
 
-
-    env.reset()
-    n_skipped = 0
-    step_count = 0
-
-    total_rewards = []
-    log_probabilities = []
-    rewards = []
-
-    for i_episode in range(num_steps):
-        env.render()
-
-        if n_skipped <= 2:
-            n_skipped += 1
-            action = env.action_space.sample()
+    for i_episode in range(1):
+        print("EPISODE: ", i_episode)
+        env.reset()
+        action = env.action_space.sample()
+        for t in range(num_steps):
+            print("STEP: ", t)
+            env.render()
+            # print(observation)
             observation, reward, done, info = env.step(action)
-            continue
+            print("REWARD: ", reward)
+            all_rewards.append(reward)
 
-        # print(observation)
-        action, log_probability = estimator.get_action(create_distance_matrix(observation))
-        observation, reward, done, info = env.step(action)
+            x = observation['robot_coordinates']
+            z = observation['observations']
+            lm_data = observation['LM_data']
+            associated_data, all_data = DA.get_association(z, x, lm_data[:, 2].copy())
+            print("All data: ", lm_data[:, 2], all_data)
+            print("Associated data: ", associated_data)
 
-        print("Reward: " + str(reward))
+            action_data = np.zeros(env.action_space.shape[0])
+            action_data.fill(args.max_obs_per_time_step)
 
-        total_rewards.append(reward)
-        log_probabilities.append(log_probability)
-        rewards.append(reward)
+            counter = 0
+            for obs in associated_data:
+                if obs is not None:
+                    action_data[int(obs)] = counter
+                    counter += 1
 
-        step_count += 1
-        if step_count % 5 == 0:
-            estimator.update_policy(rewards, log_probabilities)
+            print("calculated observations_IDs: ", action_data)
+            action = action_data
+            if done:
+                print("Episode finished after {} timesteps".format(t + 1))
+                break
 
-    env.close()
-
-
-def create_distance_matrix(observation):
-    measurements = observation['observations']
-    landmarks = observation['LM_data']
-    distance_matrix = np.zeros((landmarks.shape[0], measurements.shape[0]))
-    for i in range(landmarks.shape[0]):
-        for j in range(measurements.shape[0]):
-            observed_coords = get_landmark_position(observation['robot_coordinates'],
-                                                    measurements[j][0], measurements[j][1])
-            predicted_coords = landmarks[i][0:2]
-            distance_matrix[i, j] = np.sqrt(
-                (predicted_coords[0] - observed_coords[0])**2 + (predicted_coords[1] - observed_coords[1])**2)
-    return distance_matrix
-
-
-def get_landmark_position(state, range, bearing):
-    angle = wrap_angle(state[2] + bearing)
-    x_rel = range * np.cos(angle)
-    y_rel = range * np.sin(angle)
-    x = x_rel + state[0]
-    y = y_rel + state[1]
-    return np.array([x, y])
+    plt.cla()
+    plt.plot(all_rewards)
+    plt.show()
+    plt.pause(5)
 
 
 if __name__ == '__main__':

@@ -116,6 +116,7 @@ class DataAssociationEnv(gym.Env):
     def step(self, action):
         self._set_action(action)
         reward = self._compute_reward()
+        # print("REWARD: ", reward)
         observation = self._get_observation()
 
         done = False
@@ -187,7 +188,7 @@ class DataAssociationEnv(gym.Env):
         n_correct = 0
         n_incorrect = 0
 
-        print(self.observations_IDs)
+        print("observations_IDs: ", self.observations_IDs)
         for i in range(self.data_association.shape[0]):
             if self.data_association[i] == self.observations_IDs[i]:
                 n_correct += 1
@@ -224,6 +225,7 @@ class DataAssociationEnv(gym.Env):
             n_observations = int(np.round(np.random.random_sample() * self.n_possible_observations))
 
             flag = True
+            counter = 0
             for n_obs in range(n_observations):
                 id = int(np.round(np.random.random_sample() * (self.n_possible_LMs - 1)))
                 while id in self.observations_IDs:
@@ -234,7 +236,9 @@ class DataAssociationEnv(gym.Env):
                 self.noisy_observations = np.vstack((self.noisy_observations, noisy_observation))
                 self.noise_free_observations = np.vstack((self.noise_free_observations, noise_free_observation))
 
-                self.observations_IDs.append(id)
+                # self.observations_IDs = np.append(self.observations_IDs, id)
+                self.observations_IDs[id] = counter
+                counter += 1
 
                 self.observations[n_obs] = noisy_observation[:2]
                 # self.LM_data[id, :2] = get_landmark_coords_global(self.robot_coordinates, self.noisy_observations)
@@ -289,7 +293,7 @@ class DataAssociationEnv(gym.Env):
 
             self.observations_IDs = np.zeros(self.n_possible_LMs)
             self.observations_IDs.fill(self.n_possible_observations)
-            for i, obs in enumerate(self.noisy_observations):
+            for i, obs in enumerate(self.noise_free_observations):
                     self.observations_IDs[int(obs[2])] = i
 
             self.observations = self.noisy_observations[:, :2]
