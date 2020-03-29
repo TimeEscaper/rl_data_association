@@ -152,33 +152,33 @@ class DataAssociationEnv(gym.Env):
         return self.observations, self.robot_coordinates, self.LM_data
 
     def render(self, mode='live', screen_width=DEFAULT_WIDTH_SIZE, screen_height=DEFAULT_HEIGHT_SIZE):
-        with self.movie_writer.saving(self.fig, self.movie_file, self.num_steps) if self.should_write_movie else get_dummy_context_mgr():
+        #with self.movie_writer.saving(self.fig, self.movie_file, self.num_steps) if self.should_write_movie else get_dummy_context_mgr():
 
-            plt.cla()
-            plot_field(self.field_map, self.noise_free_observations[:, 2])
-            # plot_robot(get_state(self.field_map))
-            plot_robot(self.robot_coordinates)
+        plt.cla()
+        plot_field(self.field_map, self.noise_free_observations[:, 2])
+        # plot_robot(get_state(self.field_map))
+        plot_robot(self.robot_coordinates)
 
-            plot_observations(self.robot_coordinates,
-                              self.noise_free_observations,
-                              self.noisy_observations)
+        plot_observations(self.robot_coordinates,
+                          self.noise_free_observations,
+                          self.noisy_observations)
 
-            if not self.random_state_generator:
-                tp1 = self.t + 1
-                t = self.t
-                # plt.plot(self.data_sam.debug.real_robot_path[1:tp1, 0], self.data_sam.debug.real_robot_path[1:tp1, 1], 'm')
-                # plt.plot(self.data_sam.debug.noise_free_robot_path[1:tp1, 0], self.data_sam.debug.noise_free_robot_path[1:tp1, 1], 'g')
+        if not self.random_state_generator:
+            tp1 = self.t + 1
+            t = self.t
+            # plt.plot(self.data_sam.debug.real_robot_path[1:tp1, 0], self.data_sam.debug.real_robot_path[1:tp1, 1], 'm')
+            # plt.plot(self.data_sam.debug.noise_free_robot_path[1:tp1, 0], self.data_sam.debug.noise_free_robot_path[1:tp1, 1], 'g')
 
-                # plt.plot([self.data_sam.debug.real_robot_path[t, 0]], [self.data_sam.debug.real_robot_path[t, 1]], '*r')
-                # plt.plot([self.data_sam.debug.noise_free_robot_path[t, 0]], [self.data_sam.debug.noise_free_robot_path[t, 1]], '*g')
+            # plt.plot([self.data_sam.debug.real_robot_path[t, 0]], [self.data_sam.debug.real_robot_path[t, 1]], '*r')
+            # plt.plot([self.data_sam.debug.noise_free_robot_path[t, 0]], [self.data_sam.debug.noise_free_robot_path[t, 1]], '*g')
 
-            if self.should_show_plots:
-                # Draw all the plots and pause to create an animation effect.
-                plt.draw()
-                plt.pause(0.01)
+        if self.should_show_plots:
+            # Draw all the plots and pause to create an animation effect.
+            plt.draw()
+            plt.pause(0.01)
 
-            if self.should_write_movie:
-                self.movie_writer.grab_frame()
+        if self.should_write_movie:
+            self.movie_writer.grab_frame()
 
     def close(self):
         '''
@@ -307,7 +307,7 @@ class DataAssociationEnv(gym.Env):
             self.observations_IDs = np.zeros(self.n_possible_LMs)
             self.observations_IDs.fill(self.n_possible_observations)
             for i, obs in enumerate(self.noise_free_observations):
-                    self.observations_IDs[int(obs[2])] = i
+                self.observations_IDs[int(obs[2])] = i
 
             self.observations = self.noisy_observations[:, :2]
 

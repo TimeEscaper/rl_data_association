@@ -5,6 +5,7 @@ from gym_tools.gym import DataAssociationEnv
 from gym_tools.tools import Gaussian
 from ic_da.ic import IC
 import matplotlib.pyplot as plt
+from gym_tools.tools import get_movie_writer, get_dummy_context_mgr
 
 def isNaN(num):
     return num != num
@@ -130,10 +131,9 @@ def main():
 
     all_rewards = []
 
-    for i_episode in range(1):
-        print("EPISODE: ", i_episode)
-        env.reset()
-        action = env.action_space.sample()
+    env.reset()
+    action = env.action_space.sample()
+    with env.movie_writer.saving(env.fig, args.movie_file, env.num_steps) if should_write_movie else get_dummy_context_mgr():
         for t in range(num_steps):
             print("STEP: ", t)
             env.render()
