@@ -271,8 +271,8 @@ class DataAssociationEnv(gym.Env):
             # SLAM update
             self.sam.update(z)
 
-            # self.robot_coordinates = np.array([self.sam.states_[-1, 0], self.sam.states_[-1, 1], wrap_angle(self.sam.states_[-1, 2])])
-            self.robot_coordinates = self.data_sam.debug.real_robot_path[self.t]
+            self.robot_coordinates = np.array([self.sam.states_[-1, 0], self.sam.states_[-1, 1], wrap_angle(self.sam.states_[-1, 2])])
+            # self.robot_coordinates = self.data_sam.debug.real_robot_path[self.t]  # Real states (not available for DA algorithms)
 
             self.noise_free_observations = self.data_sam.debug.noise_free_observations[self.t]
             self.noisy_observations = self.data_sam.filter.observations[self.t]
