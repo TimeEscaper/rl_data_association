@@ -20,7 +20,7 @@ class ReinforceEstimator:
         self.optimizer_ = optim.Adam(self.da_net_.parameters(), lr=lr)
 
     def get_action(self, state):
-        association_probabilities = self.da_net_.forward(state)
+        association_probabilities = self.da_net_.forward(torch.Tensor(state))
 
         actions = []
         log_probabilities = []
@@ -35,8 +35,9 @@ class ReinforceEstimator:
     def update_policy(self, rewards, log_probabilities):
         returns = self.get_returns_(rewards)
         policy_gradient = []
+        # TODO: Check
         for log_probability, Gt in zip(log_probabilities, returns):
-            policy_gradient.append(-log_probability * Gt)
+            policy_gradient.append(-torch.Tensor(log_probability) * Gt)
         loss = torch.stack(policy_gradient).sum()
         self.optimizer_.zero_grad()
         loss.backward()
