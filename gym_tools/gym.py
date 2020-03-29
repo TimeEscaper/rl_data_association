@@ -73,12 +73,13 @@ class DataAssociationEnv(gym.Env):
         self.fig = get_plots_figure(self.should_show_plots, self.should_write_movie)
         self.movie_writer = get_movie_writer(should_write_movie, 'Simulation SLAM', int(np.round(1.0 / self.dt)), 0.01)
 
-        alphas = np.array(alphas)
-        beta = np.array(beta)
+        self.alphas = np.array(alphas)
+        self.beta = np.array(beta)
 
-        mean_prior = np.array([180., 50., 0.])
-        Sigma_prior = 1e-12 * np.eye(3, 3)
-        initial_state = Gaussian(mean_prior, Sigma_prior)
+        self.mean_prior = np.array([180., 50., 0.])
+        self.Sigma_prior = 1e-12 * np.eye(3, 3)
+        self.initial_state = Gaussian(self.mean_prior, self.Sigma_prior)
+        self.solver = solver
 
         self.random_state_generator = random_state_generator
 
@@ -97,11 +98,11 @@ class DataAssociationEnv(gym.Env):
             else:
                 raise RuntimeError('')
 
-        self.sam = SqrtSAM(mean_prior,
-                           Sigma_prior,
-                           alphas ** 2,
-                           np.diag([beta[0] ** 2, np.deg2rad(beta[1]) ** 2]),
-                           solver=solver)
+        self.sam = SqrtSAM(self.mean_prior,
+                           self.Sigma_prior,
+                           self.alphas ** 2,
+                           np.diag([self.beta[0] ** 2, np.deg2rad(self.beta[1]) ** 2]),
+                           solver=self.solver)
 
         self.unique_observations_IDs = []
         self.LM_data_flex = np.zeros((0, 3))
@@ -119,14 +120,18 @@ class DataAssociationEnv(gym.Env):
         # print("REWARD: ", reward)
         observation = self._get_observation()
 
-        done = False
         self.t += 1
+        if self.t >= self.num_steps:
+            done = True
+        else:
+            done = False
 
         info = {'reward': reward}
 
         return observation, reward, done, info
 
     def reset(self):
+        self.t = 0
         self.observations.fill(0)
         self.robot_coordinates.fill(0)
         self.LM_data.fill(0)
@@ -137,6 +142,12 @@ class DataAssociationEnv(gym.Env):
 
         self.noisy_observations = np.zeros((0, 3))
         self.noise_free_observations = np.zeros((0, 3))
+
+        self.sam = SqrtSAM(self.mean_prior,
+                           self.Sigma_prior,
+                           self.alphas ** 2,
+                           np.diag([self.beta[0] ** 2, np.deg2rad(self.beta[1]) ** 2]),
+                           solver=self.solver)
 
         return self.observations, self.robot_coordinates, self.LM_data
 
@@ -188,12 +199,15 @@ class DataAssociationEnv(gym.Env):
         n_correct = 0
         n_incorrect = 0
 
-        print("observations_IDs: ", self.observations_IDs)
+        print("Action: ", self.data_association)
+        print("True DA: ", self.observations_IDs)
+
         for i in range(self.data_association.shape[0]):
-            if self.data_association[i] == self.observations_IDs[i]:
-                n_correct += 1
-            else:
-                n_incorrect += 1
+            if self.observations_IDs[i] < self.n_possible_observations:
+                if self.data_association[i] == self.observations_IDs[i]:
+                    n_correct += 1
+                else:
+                    n_incorrect += 1
 
         # for observation in self.observations_IDs:
         #     if observation == self.data_association[counter]:
@@ -277,7 +291,6 @@ class DataAssociationEnv(gym.Env):
 
             # Observation at the current step.
             z = self.data_sam.filter.observations[self.t]
-            print(z[:, 2])
 
             # SLAM predict(u)
             self.sam.predict(u)

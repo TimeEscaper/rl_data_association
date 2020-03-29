@@ -138,39 +138,60 @@ def main():
                                    max_landmarks=args.num_landmarks_per_side*2,
                                    hidden_state_size=10)
 
-
-    env.reset()
-    n_skipped = 0
-    step_count = 0
-
     total_rewards = []
     log_probabilities = []
     rewards = []
 
-    for i_episode in range(num_steps):
-        env.render()
+    for i_episode in range(100):
+        print("\nNew episode\n")
+        env.close()
+        env = DataAssociationEnv(input_data_file=args.input_data_file, solver=solver,
+                                 n_possible_observations=args.max_obs_per_time_step,
+                                 n_possible_LMs=args.num_landmarks_per_side * 2,
+                                 num_landmarks_per_side=args.num_landmarks_per_side,
+                                 should_show_plots=should_show_plots,
+                                 should_write_movie=should_write_movie, num_steps=num_steps, alphas=alphas,
+                                 beta=beta, random_state_generator=should_generate_random_state, dt=args.dt,
+                                 movie_file=args.movie_file)
 
-        if n_skipped <= 2:
-            n_skipped += 1
-            action = env.action_space.sample()
+        env.reset()
+        n_skipped = 0
+        step_count = 0
+
+        while True:
+            #env.render()
+
+            step_count += 1
+            if n_skipped <= 2:
+                n_skipped += 1
+                action = env.action_space.sample()
+                observation, reward, done, info = env.step(action)
+                continue
+
+            # print(observation)
+            action, log_probability = estimator.get_action(create_distance_matrix(observation))
             observation, reward, done, info = env.step(action)
-            continue
 
-        # print(observation)
-        action, log_probability = estimator.get_action(create_distance_matrix(observation))
-        observation, reward, done, info = env.step(action)
+            print("Episode: " + str(i_episode) + ", step: " + str(step_count))
+            print("Reward: " + str(reward))
 
-        print("Reward: " + str(reward))
+            total_rewards.append(reward)
+            log_probabilities.append(log_probability)
+            rewards.append(reward)
 
-        total_rewards.append(reward)
-        log_probabilities.append(log_probability)
-        rewards.append(reward)
+            if step_count % 5 == 0:
+                estimator.update_policy(rewards, log_probabilities)
+                log_probabilities = []
+                rewards = []
 
-        step_count += 1
-        if step_count % 5 == 0:
-            estimator.update_policy(rewards, log_probabilities)
+            if done:
+                if len(rewards) != 0:
+                    estimator.update_policy(rewards, log_probabilities)
+                    log_probabilities = []
+                    rewards = []
+                break
 
-    env.close()
+    plt.plot(total_rewards)
 
 
 def create_distance_matrix(observation):
@@ -179,11 +200,14 @@ def create_distance_matrix(observation):
     distance_matrix = np.zeros((landmarks.shape[0], measurements.shape[0]))
     for i in range(landmarks.shape[0]):
         for j in range(measurements.shape[0]):
-            observed_coords = get_landmark_position(observation['robot_coordinates'],
-                                                    measurements[j][0], measurements[j][1])
-            predicted_coords = landmarks[i][0:2]
-            distance_matrix[i, j] = np.sqrt(
-                (predicted_coords[0] - observed_coords[0])**2 + (predicted_coords[1] - observed_coords[1])**2)
+            if landmarks[i, 2] != -1:
+                observed_coords = get_landmark_position(observation['robot_coordinates'],
+                                                        measurements[j][0], measurements[j][1])
+                predicted_coords = landmarks[i][0:2]
+                distance_matrix[i, j] = np.sqrt(
+                    (predicted_coords[0] - observed_coords[0])**2 + (predicted_coords[1] - observed_coords[1])**2)
+            else:
+                distance_matrix[i, j] = 10000.0
     return distance_matrix
 
 
