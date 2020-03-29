@@ -147,13 +147,15 @@ def main():
     estimator = ReinforceEstimator(observation_dim=1,
                                    n_observations=args.max_obs_per_time_step,
                                    max_landmarks=args.num_landmarks_per_side*2,
-                                   hidden_state_size=10)
+                                   hidden_state_size=10,
+                                   lr=1e-3)
 
     total_rewards = []
+    total_rewards_per_step = []
     log_probabilities = []
     rewards = []
 
-    for i_episode in range(100):
+    for i_episode in range(10):
         print("\nNew episode\n")
         env.close()
         env = DataAssociationEnv(input_data_file=args.input_data_file, solver=solver,
@@ -186,9 +188,9 @@ def main():
             print("Episode: " + str(i_episode) + ", step: " + str(step_count))
             print("Reward: " + str(reward))
 
-            total_rewards.append(reward)
             log_probabilities.append(log_probability)
             rewards.append(reward)
+            total_rewards_per_step.append(reward)
 
             if step_count % 5 == 0:
                 estimator.update_policy(rewards, log_probabilities)
@@ -197,12 +199,24 @@ def main():
 
             if done:
                 if len(rewards) != 0:
+                    total_rewards.append(np.sum(rewards))
                     estimator.update_policy(rewards, log_probabilities)
                     log_probabilities = []
                     rewards = []
+
+                # for name, param in estimator.da_net_.named_parameters():
+                #     if param.requires_grad:
+                #         print(name, param.data)
+
                 break
 
     plt.plot(total_rewards)
+    plt.title("Rewards per episode")
+    plt.show()
+
+    plt.plot(total_rewards_per_step)
+    plt.title("Rewards per step")
+    plt.show()
 
 def create_distance_matrix(observation):
     measurements = observation['observations']

@@ -31,7 +31,7 @@ class ReinforceEstimator:
             log_probability = torch.log(probabilities[observation_index]) if log_probability is None else \
                 log_probability + torch.log(probabilities[observation_index])
 
-        return np.array(actions), log_probability.detach().item()
+        return np.array(actions), log_probability
 
     def update_policy(self, rewards, log_probabilities):
         returns = self.get_returns_(rewards)
