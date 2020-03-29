@@ -23,21 +23,22 @@ class ReinforceEstimator:
         association_probabilities = self.da_net_.forward(torch.Tensor(state))
 
         actions = []
-        log_probabilities = []
+        log_probability = None
 
         for probabilities in association_probabilities:
             observation_index = probabilities.argmax().detach().numpy()
             actions.append(observation_index)
-            log_probabilities.append(torch.log(probabilities[observation_index]).detach().numpy())
+            log_probability = torch.log(probabilities[observation_index]) if log_probability is None else \
+                log_probability + torch.log(probabilities[observation_index])
 
-        return np.array(actions), np.array(log_probabilities)
+        return np.array(actions), log_probability.detach().item()
 
     def update_policy(self, rewards, log_probabilities):
         returns = self.get_returns_(rewards)
         policy_gradient = []
         # TODO: Check
         for log_probability, Gt in zip(log_probabilities, returns):
-            policy_gradient.append(-torch.Tensor(log_probability) * Gt)
+            policy_gradient.append(-log_probability * Gt)
         loss = torch.stack(policy_gradient).sum()
         self.optimizer_.zero_grad()
         loss.backward()
