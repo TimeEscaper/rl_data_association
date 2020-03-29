@@ -89,6 +89,11 @@ def get_cli_args():
                         help='Least squares solving method: build-in numpy or Cholesky factorization with back-substitution.',
                         choices=['numpy', 'cholesky'],
                         default='numpy')
+    parser.add_argument('--scaling',
+                        type=float,
+                        action='store',
+                        help='Scaling coefficient for map generator.',
+                        default=1.)
     parser.add_argument('-r', '--random', action='store_true',
                         help='Generate random robots state each step.')
     return parser.parse_args()
@@ -123,7 +128,7 @@ def main():
     env = DataAssociationEnv(input_data_file=args.input_data_file, solver=solver, n_possible_observations=args.max_obs_per_time_step,
                              n_possible_LMs=args.num_landmarks_per_side*2, num_landmarks_per_side=args.num_landmarks_per_side, should_show_plots=should_show_plots,
                              should_write_movie=should_write_movie, num_steps=num_steps, alphas=alphas,
-                             beta=beta, random_state_generator=should_generate_random_state, dt=args.dt, movie_file=args.movie_file)
+                             beta=beta, random_state_generator=should_generate_random_state, dt=args.dt, movie_file=args.movie_file, scaling=args.scaling)
 
     x_list = []
     x_list.append(mean_prior)

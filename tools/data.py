@@ -159,7 +159,8 @@ def generate_data(initial_pose,
                   beta,
                   dt,
                   animate=False,
-                  plot_pause_s=0.01):
+                  plot_pause_s=0.01,
+                  scaling=1):
     """
     Generates the trajectory of the robot using square path given by `generate_motion`.
 
@@ -172,6 +173,7 @@ def generate_data(initial_pose,
     :param dt: The time difference (in seconds) between two consecutive time steps.
     :param animate: If True, this function will animate the generated data in a plot.
     :param plot_pause_s: The time (in seconds) to pause the plot animation between two consecutive frames.
+    :param scaling: Scaling coefficient for field constructor.
     :return: SimulationData object.
     """
 
@@ -203,7 +205,7 @@ def generate_data(initial_pose,
     debug_data.real_robot_path[0] = initial_pose
     debug_data.noise_free_robot_path[0] = initial_pose
 
-    field_map = FieldMap(num_landmarks_per_side)
+    field_map = FieldMap(num_landmarks_per_side, scaling)
 
     # Covariance of observation noise.
     alphas = alphas ** 2

@@ -21,7 +21,7 @@ DEFAULT_HEIGHT_SIZE = 400
 class DataAssociationEnv(gym.Env):
     def __init__(self, input_data_file, solver, n_possible_observations=10, n_possible_LMs=10, num_landmarks_per_side=5,
                  should_show_plots=True, should_write_movie=False, num_steps=100, alphas=(0.05, 0.001, 0.05, 0.01),
-                 beta=(10., 10.), random_state_generator=True, dt=0.1, movie_file="Gym.mp4"):
+                 beta=(10., 10.), random_state_generator=True, dt=0.1, movie_file="Gym.mp4", scaling=1):
 
         # Current observation
         # (before the new observation we have info about LM coordinates and their IDs if they were observed previously)
@@ -68,7 +68,7 @@ class DataAssociationEnv(gym.Env):
             robot_coordinates=spaces.Box(-np.inf, np.inf, shape=self.robot_coordinates.shape, dtype='float32'),
             LM_data=spaces.Box(-np.inf, np.inf, shape=self.LM_data.shape, dtype='float32')))
 
-        self.field_map = FieldMap(num_landmarks_per_side)
+        self.field_map = FieldMap(num_landmarks_per_side, scaling)
 
         self.fig = get_plots_figure(self.should_show_plots, self.should_write_movie)
         self.movie_writer = get_movie_writer(should_write_movie, 'Simulation SLAM', int(np.round(1.0 / self.dt)), 0.01)
@@ -94,7 +94,8 @@ class DataAssociationEnv(gym.Env):
                                                     n_possible_observations,
                                                     alphas,
                                                     beta,
-                                                    dt)
+                                                    dt,
+                                                    scaling)
             else:
                 raise RuntimeError('')
 
