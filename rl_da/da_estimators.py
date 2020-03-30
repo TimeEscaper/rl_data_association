@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 
-from rl_da.da_network import DANetwork
+from rl_da.da_network import DANetwork, ValueNetwork
 
 
 class ReinforceEstimator:
@@ -57,4 +57,64 @@ class ReinforceEstimator:
         returns = (returns - returns.mean()) / (returns.std() + 1e-9)
         return returns
 
+
+class A2CEstimator:
+    def __init__(self, observation_dim, n_observations, max_landmarks, hidden_state_size, gamma=0.5, lr=1e-3):
+        self.observation_dim_ = observation_dim
+        self.n_observations_ = n_observations
+        self.max_landmarks_ = max_landmarks
+        self.hidden_state_size_ = hidden_state_size
+        self.gamma_ = gamma
+        self.lr_ = lr
+
+        self.da_net_ = DANetwork(n_observations * observation_dim, 10, n_observations + 1, max_landmarks)
+        self.critic_net_ = ValueNetwork(max_landmarks * n_observations, 20)
+
+        self.actor_optimizer_ = optim.Adam(self.da_net_.parameters(), lr=lr)
+        self.critic_optimizer_ = optim.Adam(self.critic_net_.parameters(), lr=lr)
+
+    def get_action(self, state):
+        state = torch.Tensor(state)
+        association_probabilities = self.da_net_.forward(state)
+
+        actions = []
+        log_probability = None
+
+        for probabilities in association_probabilities:
+            observation_index = probabilities.argmax().detach().numpy()
+            actions.append(observation_index)
+            log_probability = torch.log(probabilities[observation_index]) if log_probability is None else \
+                log_probability + torch.log(probabilities[observation_index])
+
+        state_value = self.critic_net_(state.view(self.max_landmarks_ * self.n_observations_))
+
+        return np.array(actions), log_probability, state_value
+
+    def update_policy(self, rewards, log_probabilities, state_values):
+        returns = self.get_returns_(rewards)
+        policy_loss = 0
+        value_loss = 0
+        for log_probability, value, Gt in zip(log_probabilities, state_values, returns):
+            advantage = Gt - value.item()
+            policy_loss += -log_probability * advantage
+            value_loss += F.smooth_l1_loss(value.squeeze(), Gt)
+        self.actor_optimizer_.zero_grad()
+        policy_loss.backward()
+        self.actor_optimizer_.step()
+        self.critic_optimizer_.zero_grad()
+        value_loss.backward()
+        self.critic_optimizer_.step()
+
+    def get_returns_(self, rewards):
+        returns = []
+        Gt = 0
+        pw = 0
+        for reward in rewards[::-1]:
+            Gt += self.gamma_ ** pw * reward
+            pw += 1
+            returns.append(Gt)
+        returns = returns[::-1]
+        returns = torch.tensor(returns, requires_grad=True)
+        returns = (returns - returns.mean()) / (returns.std() + 1e-9)
+        return returns
 

@@ -21,8 +21,6 @@ class DANetwork(nn.Module):
         self.output_dim_ = output_dim
         self.seq_len_ = seq_len
 
-        #self.lstms_ = nn.ModuleList([nn.LSTM(input_dim, hidden_dim) for _ in range(n_layers)])
-        #self.linears_ = nn.ModuleList([nn.Linear(hidden_dim, output_dim) for _ in range(n_layers)])
         self.lstm_ = nn.LSTM(input_dim, hidden_dim)
         self.linear_ = nn.Linear(hidden_dim, output_dim)
 
@@ -45,4 +43,16 @@ class DANetwork(nn.Module):
             outputs[i, :] = F.softmax(self.linear_(output_vector), dim=-1)
 
         return outputs
+
+
+class ValueNetwork(nn.Module):
+    def __init__(self, input_dim, hidden_size):
+        super(ValueNetwork, self).__init__()
+        self.linear_input_ = nn.Linear(input_dim, hidden_size)
+        self.linear_output_ = nn.Linear(hidden_size, 1)
+
+    def forward(self, x):
+        return self.linear_output_(F.relu(self.linear_input_(x)))
+
+
 
