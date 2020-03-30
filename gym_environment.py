@@ -4,6 +4,7 @@ import numpy as np
 from gym_tools.gym import DataAssociationEnv
 from gym_tools.tools import Gaussian
 from tools.task import wrap_angle
+import matplotlib.pyplot as plt
 
 from rl_da.da_estimators import ReinforceEstimator, A2CEstimator
 
