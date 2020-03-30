@@ -1,10 +1,11 @@
 # RL data association
 Data Association in SLAM using Reinforcement Learning (["Perception in Robotics"](https://github.com/Kichkun/perception_course) Skoltech course project)
-![Image of Table](https://github.com/TimeEscaper/rl_data_association/tree/dev/images/table.png)
+![alt text](images/pipeline.png)
 
 # Custom gym environment
 [Gym](https://gym.openai.com/) is a toolkit for developing and comparing reinforcement learning algorithms. For our project we created custom environment.
-![Image of Data](https://github.com/TimeEscaper/rl_data_association/tree/dev/images/data_transfer.png)
+![alt text](images/data_generation.png)
+![alt text](images/data_transfer.png)
 ## How to use it
 - Create object of class DataAssociationEnv with necessary parameters
 - You can choose two ways to generate observations: 
@@ -31,40 +32,40 @@ In file gym_environment.py you can find usage of the environment. List of the pa
 ## How it works
 For example lets assume that we picked random data generation option (8 landmarks). After first iteration we will get observation parameter:
 'observations': 
-> array([[ 4.68595243e+02, -6.67027008e-01],
->       [ 3.30830914e+02, -1.04785606e+00],
->       [ 4.04755448e+02,  4.65353626e-03],
->       [ 0.00000000e+00,  0.00000000e+00],
->       [ 0.00000000e+00,  0.00000000e+00],
->       [ 0.00000000e+00,  0.00000000e+00],
+> array([[ 4.68595243e+02, -6.67027008e-01],  
+>       [ 3.30830914e+02, -1.04785606e+00],  
+>       [ 4.04755448e+02,  4.65353626e-03],  
+>       [ 0.00000000e+00,  0.00000000e+00],  
+>       [ 0.00000000e+00,  0.00000000e+00],  
+>       [ 0.00000000e+00,  0.00000000e+00],  
 >       [ 0.00000000e+00,  0.00000000e+00]])
 
 'robot_coordinates': 
 > array([480.49167046, 241.87318988,  -2.40705962])
 
 'LM_data': 
-> array([[ 0.,  0., -1.],
->       [ 0.,  0., -1.],
->       [ 0.,  0., -1.],
->       [ 0.,  0., -1.],
->       [ 0.,  0., -1.],
->       [ 0.,  0., -1.],
->       [ 0.,  0., -1.],
+> array([[ 0.,  0., -1.],  
+>       [ 0.,  0., -1.],  
+>       [ 0.,  0., -1.],  
+>       [ 0.,  0., -1.],  
+>       [ 0.,  0., -1.],  
+>       [ 0.,  0., -1.],  
+>       [ 0.,  0., -1.],  
 >       [ 0.,  0., -1.]])
 
 For LM_data -1 in ID column means that we have no info jet.
 On the second step we assume correct DA on the previous step. Thats why our landmark info will look like (this info is available for DA algorithms):
 'LM_data': 
-> array([[ 21.        , 292.        ,   7.        ],
->        [168.33333333, 292.        ,   6.        ],
->        [168.33333333,   0.        ,   1.        ],
->        [  0.        ,   0.        ,  -1.        ],
->        [  0.        ,   0.        ,  -1.        ],
->        [  0.        ,   0.        ,  -1.        ],
->        [  0.        ,   0.        ,  -1.        ],
+> array([[ 21.        , 292.        ,   7.        ],  
+>        [168.33333333, 292.        ,   6.        ],  
+>        [168.33333333,   0.        ,   1.        ],  
+>        [  0.        ,   0.        ,  -1.        ],  
+>        [  0.        ,   0.        ,  -1.        ],  
+>        [  0.        ,   0.        ,  -1.        ],  
+>        [  0.        ,   0.        ,  -1.        ],  
 >        [  0.        ,   0.        ,  -1.        ]])
 
-Array contains info about global landmark coordinates (perfect for random data generation case) and their IDs. Let's check the first one. For robot coordinates array([480.49167046, 241.87318988,  -2.40705962]) and observation array([ 4.68595243e+02, -6.67027008e-01]) noisy landmark coordinates: array([12.96373119  210.26420754])
+Array contains info about global landmark coordinates (perfect for random data generation case) and their IDs. Let's check the first one. For robot coordinates [480.49167046, 241.87318988,  -2.40705962] and observation [ 4.68595243e+02, -6.67027008e-01] noisy landmark coordinates: [12.96373119  210.26420754]
 
 # To randomly generate data 
 ```bash
