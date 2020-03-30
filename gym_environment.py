@@ -4,8 +4,9 @@ import numpy as np
 from gym_tools.gym import DataAssociationEnv
 from gym_tools.tools import Gaussian
 from tools.task import wrap_angle
+import matplotlib.pyplot as plt
 
-from rl_da.da_estimators import ReinforceEstimator
+from rl_da.da_estimators import ReinforceEstimator, A2CEstimator
 
 def get_cli_args():
     parser = ArgumentParser('Perception in Robotics FP')
@@ -135,14 +136,22 @@ def main():
 
     estimator = ReinforceEstimator(observation_dim=1,
                                    n_observations=args.max_obs_per_time_step,
-                                   max_landmarks=args.num_landmarks_per_side*2,
-                                   hidden_state_size=10)
+                                   max_landmarks=args.num_landmarks_per_side * 2,
+                                   hidden_state_size=10,
+                                   lr=1e-3)
+    # estimator = A2CEstimator(observation_dim=1,
+    #                          n_observations=args.max_obs_per_time_step,
+    #                          max_landmarks=args.num_landmarks_per_side*2,
+    #                          hidden_state_size=10,
+    #                          lr=1e-3)
 
     total_rewards = []
+    total_rewards_per_step = []
     log_probabilities = []
+    state_values = []
     rewards = []
 
-    for i_episode in range(100):
+    for i_episode in range(10):
         print("\nNew episode\n")
         env.close()
         env = DataAssociationEnv(input_data_file=args.input_data_file, solver=solver,
@@ -169,29 +178,47 @@ def main():
                 continue
 
             # print(observation)
+            #action, log_probability, state_value = estimator.get_action(create_distance_matrix(observation))
             action, log_probability = estimator.get_action(create_distance_matrix(observation))
             observation, reward, done, info = env.step(action)
 
             print("Episode: " + str(i_episode) + ", step: " + str(step_count))
             print("Reward: " + str(reward))
 
-            total_rewards.append(reward)
             log_probabilities.append(log_probability)
             rewards.append(reward)
+            #state_values.append(state_value)
+            total_rewards_per_step.append(reward)
 
             if step_count % 5 == 0:
+                #estimator.update_policy(rewards, log_probabilities, state_values)
                 estimator.update_policy(rewards, log_probabilities)
                 log_probabilities = []
                 rewards = []
+                state_values = []
 
             if done:
                 if len(rewards) != 0:
+                    total_rewards.append(np.sum(rewards))
+                    #estimator.update_policy(rewards, log_probabilities, state_values)
                     estimator.update_policy(rewards, log_probabilities)
                     log_probabilities = []
                     rewards = []
+                    state_values = []
+
+                # for name, param in estimator.da_net_.named_parameters():
+                #     if param.requires_grad:
+                #         print(name, param.data)
+
                 break
 
     plt.plot(total_rewards)
+    plt.title("Rewards per episode")
+    plt.show()
+
+    plt.plot(total_rewards_per_step)
+    plt.title("Rewards per step")
+    plt.show()
 
 
 def create_distance_matrix(observation):
