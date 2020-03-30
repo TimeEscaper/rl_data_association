@@ -45,14 +45,38 @@ class DANetwork(nn.Module):
         return outputs
 
 
-class ValueNetwork(nn.Module):
-    def __init__(self, input_dim, hidden_size):
-        super(ValueNetwork, self).__init__()
-        self.linear_input_ = nn.Linear(input_dim, hidden_size)
-        self.linear_output_ = nn.Linear(hidden_size, 1)
+class DAValueNetwork(nn.Module):
+    def __init__(self, input_dim, hidden_dim, output_dim, seq_len, value_input_dim, value_hidden_dim):
+        super(DAValueNetwork, self).__init__()
+        self.input_dim_ = input_dim
+        self.hidden_dim_ = hidden_dim
+        self.output_dim_ = output_dim
+        self.seq_len_ = seq_len
+        self.value_input_dim_ = value_input_dim
+        self.value_hidden_dim_ = value_hidden_dim
 
-    def forward(self, x):
-        return self.linear_output_(F.relu(self.linear_input_(x)))
+        self.lstm_ = nn.LSTM(input_dim, hidden_dim)
+        self.linear_ = nn.Linear(hidden_dim, output_dim)
+
+        self.value_linear1_ = nn.Linear(value_input_dim, value_hidden_dim)
+        self.value_linear2_ = nn.Linear(value_hidden_dim, 1)
+
+    def forward(self, input_vectors):
+        hidden_input = (torch.randn(1, 1, self.hidden_dim_),
+                        torch.randn(1, 1, self.hidden_dim_))
+        outputs = torch.zeros((self.seq_len_, self.output_dim_))
+
+        input_batch = input_vectors.view(self.seq_len_, 1, self.input_dim_)
+
+        output_batch, hidden_output = self.lstm_(input_batch, hidden_input)
+        output_batch = output_batch.view(self.seq_len_, self.hidden_dim_)
+
+        for i, output_vector in enumerate(output_batch):
+            outputs[i, :] = F.softmax(self.linear_(output_vector), dim=-1)
+
+        value_output = self.value_linear2_(F.relu(self.value_linear1_(input_vectors.view(self.value_input_dim_))))
+
+        return outputs, value_output
 
 
 

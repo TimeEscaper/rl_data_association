@@ -16,7 +16,7 @@ from sqrtSAM import SqrtSAM
 from gym_tools.observation_generator import get_state
 from tools.task import wrap_angle
 
-from rl_da.da_estimators import ReinforceEstimator
+from rl_da.da_estimators import ReinforceEstimator, A2CEstimator
 
 def get_cli_args():
     parser = ArgumentParser('Perception in Robotics FP')
@@ -146,13 +146,19 @@ def main():
 
     estimator = ReinforceEstimator(observation_dim=1,
                                    n_observations=args.max_obs_per_time_step,
-                                   max_landmarks=args.num_landmarks_per_side*2,
+                                   max_landmarks=args.num_landmarks_per_side * 2,
                                    hidden_state_size=10,
                                    lr=1e-3)
+    # estimator = A2CEstimator(observation_dim=1,
+    #                          n_observations=args.max_obs_per_time_step,
+    #                          max_landmarks=args.num_landmarks_per_side*2,
+    #                          hidden_state_size=10,
+    #                          lr=1e-3)
 
     total_rewards = []
     total_rewards_per_step = []
     log_probabilities = []
+    state_values = []
     rewards = []
 
     for i_episode in range(10):
@@ -182,6 +188,7 @@ def main():
                 continue
 
             # print(observation)
+            #action, log_probability, state_value = estimator.get_action(create_distance_matrix(observation))
             action, log_probability = estimator.get_action(create_distance_matrix(observation))
             observation, reward, done, info = env.step(action)
 
@@ -190,19 +197,24 @@ def main():
 
             log_probabilities.append(log_probability)
             rewards.append(reward)
+            #state_values.append(state_value)
             total_rewards_per_step.append(reward)
 
             if step_count % 5 == 0:
+                #estimator.update_policy(rewards, log_probabilities, state_values)
                 estimator.update_policy(rewards, log_probabilities)
                 log_probabilities = []
                 rewards = []
+                state_values = []
 
             if done:
                 if len(rewards) != 0:
                     total_rewards.append(np.sum(rewards))
+                    #estimator.update_policy(rewards, log_probabilities, state_values)
                     estimator.update_policy(rewards, log_probabilities)
                     log_probabilities = []
                     rewards = []
+                    state_values = []
 
                 # for name, param in estimator.da_net_.named_parameters():
                 #     if param.requires_grad:
