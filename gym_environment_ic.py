@@ -169,10 +169,10 @@ def main():
                 print("Episode finished after {} timesteps".format(t + 1))
                 break
 
-    plt.cla()
-    plt.plot(all_rewards)
-    plt.show()
-    plt.pause(5)
+        plt.cla()
+        plt.plot(all_rewards)
+        plt.show()
+        plt.pause(5)
 
 
 if __name__ == '__main__':

@@ -141,8 +141,8 @@ def sense_landmarks(state, field_map, max_observations):
     noise_free_observations = noise_free_observations[ii]
     noise_free_observations[:, 2] = noise_free_observations[:, 2].astype(int)
 
-    c1 = noise_free_observations[:, 1] > -np.pi / 2.
-    c2 = noise_free_observations[:, 1] < np.pi / 2.
+    c1 = noise_free_observations[:, 1] > -np.pi
+    c2 = noise_free_observations[:, 1] < np.pi
     ii = np.nonzero((c1 & c2))[0]
 
     if ii.size <= max_observations:
@@ -188,9 +188,11 @@ def generate_data(initial_pose,
     #                      landmark_id (id, int)]
     observation_dim = 3
 
+    '''
     if animate:
         plt.figure(1)
         plt.ion()
+    '''
 
     data_length = num_steps + 1
     filter_data = SlamInputData(np.zeros((data_length, motion_dim)),
@@ -250,6 +252,7 @@ def generate_data(initial_pose,
         filter_data.observations[i] = noisy_observations
         debug_data.noise_free_observations[i] = noise_free_observations
 
+        '''
         if animate:
             plt.clf()
 
@@ -264,9 +267,12 @@ def generate_data(initial_pose,
 
             plt.draw()
             plt.pause(plot_pause_s)
+        '''
 
+    '''
     if animate:
         plt.show(block=True)
+    '''
 
     # This only initializes the sim data with everything but the first entry (which is just the prior for the sim).
     filter_data.motion_commands = filter_data.motion_commands[1:]

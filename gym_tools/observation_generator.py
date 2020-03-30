@@ -34,8 +34,8 @@ def sense_landmarks(state, field_map, max_observations):
     noise_free_observations = noise_free_observations[ii]
     noise_free_observations[:, 2] = noise_free_observations[:, 2].astype(int)
 
-    c1 = noise_free_observations[:, 1] > -np.pi / 2.
-    c2 = noise_free_observations[:, 1] <  np.pi / 2.
+    c1 = noise_free_observations[:, 1] > -np.pi
+    c2 = noise_free_observations[:, 1] <  np.pi
     ii = np.nonzero((c1 & c2))[0]
 
     if ii.size <= max_observations:

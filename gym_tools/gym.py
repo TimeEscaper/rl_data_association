@@ -88,7 +88,7 @@ class DataAssociationEnv(gym.Env):
                 self.data_sam = load_data(input_data_file)
             elif num_steps:
                 # Generate data, assuming `--num-steps` was present in the CL args.
-                self.data_sam = generate_input_data(initial_state.mu.T,
+                self.data_sam = generate_input_data(self.initial_state.mu.T,
                                                     num_steps,
                                                     num_landmarks_per_side,
                                                     n_possible_observations,
