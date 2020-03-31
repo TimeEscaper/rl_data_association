@@ -1,2 +1,3 @@
-# rl_data_association
-Data Association in SLAM using Reinforcement Learning ("Perception in Robotics" Skoltech course project)
+# Joint Compatibility Data Association
+
+Classical algorithm for DA based on the [article] (https://ieeexplore.ieee.org/abstract/document/976019)
