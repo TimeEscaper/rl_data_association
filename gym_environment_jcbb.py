@@ -3,7 +3,7 @@ from argparse import ArgumentParser
 import numpy as np
 from gym_tools.gym import DataAssociationEnv
 from gym_tools.tools import Gaussian
-from ic_da.ic import IC
+from jcbb_da.jcbb import JCBB
 import matplotlib.pyplot as plt
 from gym_tools.tools import get_movie_writer, get_dummy_context_mgr
 
@@ -130,9 +130,7 @@ def main():
                              should_write_movie=should_write_movie, num_steps=num_steps, alphas=alphas,
                              beta=beta, random_state_generator=should_generate_random_state, dt=args.dt, movie_file=args.movie_file, scaling=args.scaling)
 
-    x_list = []
-    x_list.append(mean_prior)
-    DA = IC(env.field_map, beta)
+    DA = JCBB(env.field_map, beta, mean_prior, Sigma_prior, alphas ** 2, solver)
 
     all_rewards = []
     rewards_0 = 0
@@ -158,8 +156,9 @@ def main():
             x = observation['robot_coordinates']
             z = observation['observations']
             lm_data = observation['LM_data']
-            associated_data, all_data = DA.get_association(z, x, lm_data[:, 2].copy())
-            print("All data: ", lm_data[:, 2], all_data)
+
+            associated_data = DA.get_jcbb(z, x)
+
             print("Associated data: ", associated_data)
 
             action_data = np.zeros(env.action_space.shape[0])
